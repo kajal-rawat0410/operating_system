@@ -1,0 +1,125 @@
+MAXBLOCKS = 30
+MAXFILES = 10
+# 0 means free, 1 means allocated
+disk = [0] * MAXBLOCKS
+def reset_disk():
+    global disk
+    disk = [0] * MAXBLOCKS
+# 1. Contiguous Allocation
+def contiguous_allocation():
+    reset_disk()
+    print("\n--- Contiguous Allocation ---")
+    nf = int(input("Enter number of files: "))
+    if nf < 1 or nf > MAXFILES:
+        print("Enter between 1 and 10 files.")
+        return
+    for f in range(nf):
+        start, length = map(
+            int,
+            input(f"File {f + 1} - starting block, length: ").split()
+        )
+        # Check valid range
+        if start < 0 or length <= 0 or start + length > MAXBLOCKS:
+            print("Allocation failed: blocks out of range.")
+            continue
+        # Check whether all required blocks are free
+        available = True
+        for i in range(start, start + length):
+            if disk[i] == 1:
+                available = False
+                break
+        if not available:
+            print("Allocation failed: blocks are not free.")
+            continue
+        # Allocate consecutive blocks
+        for i in range(start, start + length):
+            disk[i] = 1
+        print(
+            f"File {f + 1} allocated blocks "
+            f"{start} to {start + length - 1}"
+        )
+# 2. Linked Allocation
+def linked_allocation():
+    reset_disk()
+    print("\n--- Linked Allocation ---")
+    nf = int(input("Enter number of files: "))
+    if nf < 1 or nf > MAXFILES:
+        print("Enter between 1 and 10 files.")
+        return
+    for f in range(nf):
+        length = int(
+            input(f"File {f + 1} - number of blocks: ")
+        )
+        if length <= 0:
+            print("Invalid number of blocks.")
+            continue
+        allocated = []
+        # Allocate free blocks
+        for i in range(MAXBLOCKS):
+            if disk[i] == 0 and len(allocated) < length:
+                disk[i] = 1
+                allocated.append(i)
+        print(
+            f"File {f + 1} allocated blocks: ",
+            end=""
+        )
+        if allocated:
+            print(" -> ".join(map(str, allocated)), end=" -> ")
+        print("NULL")
+        if len(allocated) < length:
+            print("Warning: disk full, could not allocate all blocks.")
+# 3. Indexed Allocation
+def indexed_allocation():
+    reset_disk()
+    print("\n--- Indexed Allocation ---")
+    nf = int(input("Enter number of files: "))
+    if nf < 1 or nf > MAXFILES:
+        print("Enter between 1 and 10 files.")
+        return
+    for f in range(nf):
+        length = int(
+            input(
+                f"File {f + 1} - number of data blocks needed: "
+            )
+        )
+        if length <= 0:
+            print("Invalid number of blocks.")
+            continue
+        # Allocate index block
+        index_block = -1
+        for i in range(MAXBLOCKS):
+            if disk[i] == 0:
+                index_block = i
+                disk[i] = 1
+                break
+        if index_block == -1:
+            print(f"File {f + 1}: allocation failed, no index block.")
+            continue
+        # Allocate data blocks
+        data_blocks = []
+        for i in range(MAXBLOCKS):
+            if disk[i] == 0 and len(data_blocks) < length:
+                disk[i] = 1
+                data_blocks.append(i)
+        print(
+            f"File {f + 1} - Index block: {index_block}, "
+            f"Data blocks: ",
+            end=""
+        )
+        print(" ".join(map(str, data_blocks)))
+        if len(data_blocks) < length:
+            print("Warning: disk full, could not allocate all blocks.")
+# Main Menu
+print("Menu:")
+print("1. Contiguous Allocation")
+print("2. Linked Allocation")
+print("3. Indexed Allocation")
+choice = int(input("Enter choice: "))
+if choice == 1:
+    contiguous_allocation()
+elif choice == 2:
+    linked_allocation()
+elif choice == 3:
+    indexed_allocation()
+else:
+    print("Invalid choice")
