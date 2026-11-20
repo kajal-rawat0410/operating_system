@@ -1,0 +1,20 @@
+import os
+print("Parent process: PID =", os.getpid(), flush=True)
+pid = os.fork()
+if pid < 0:
+    print("Fork failed")
+elif pid == 0:
+    # Child process
+    print("Child process: PID =", os.getpid(),
+          "Parent PID =", os.getppid(), flush=True)
+    print("Child is about to exec 'ls -l'", flush=True)
+    # Replace child process with ls -l
+    os.execlp("ls", "ls", "-l")
+else:
+    # Parent process
+    print("Parent waiting for child (PID =", pid,
+          ") to finish...", flush=True)
+    child_pid, status = os.waitpid(pid, 0)
+    exit_status = os.waitstatus_to_exitcode(status)
+    print("Child exited with status", exit_status)
+    print("Parent process resumes and exits.")
