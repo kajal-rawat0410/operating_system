@@ -1,0 +1,149 @@
+from collections import deque
+def print_result(processes):
+    total_wt = 0
+    total_tat = 0
+    print("PID\tAT\tBT\tCT\tTAT\tWT")
+    for p in processes:
+        tat = p["ct"] - p["at"]
+        wt = tat - p["bt"]
+        total_wt += wt
+        total_tat += tat
+        print(
+            f'{p["pid"]}\t{p["at"]}\t{p["bt"]}\t'
+            f'{p["ct"]}\t{tat}\t{wt}'
+        )
+    n = len(processes)
+    print(f"Average Waiting Time = {total_wt / n:.2f}")
+    print(f"Average Turnaround Time = {total_tat / n:.2f}")
+def fcfs(processes):
+    time = 0
+    for p in processes:
+        if time < p["at"]:
+            time = p["at"]
+        time += p["bt"]
+        p["ct"] = time
+    print_result(processes)
+def sjf(processes):
+    time = 0
+    completed = 0
+    n = len(processes)
+    done = [False] * n
+    while completed < n:
+        idx = -1
+        min_bt = float("inf")
+        for i, p in enumerate(processes):
+            if (not done[i] and p["at"] <= time
+                    and p["bt"] < min_bt):
+                min_bt = p["bt"]
+                idx = i
+        if idx == -1:
+            time += 1
+            continue
+        time += processes[idx]["bt"]
+        processes[idx]["ct"] = time
+        done[idx] = True
+        completed += 1
+    print_result(processes)
+def priority_scheduling(processes):
+    time = 0
+    completed = 0
+    n = len(processes)
+    done = [False] * n
+    while completed < n:
+        idx = -1
+        best_priority = float("inf")
+        for i, p in enumerate(processes):
+            if (not done[i] and p["at"] <= time
+                    and p["priority"] < best_priority):
+                best_priority = p["priority"]
+                idx = i
+        if idx == -1:
+            time += 1
+            continue
+        time += processes[idx]["bt"]
+        processes[idx]["ct"] = time
+        done[idx] = True
+        completed += 1
+    print_result(processes)
+def round_robin(processes, quantum):
+    n = len(processes)
+    remaining = [p["bt"] for p in processes]
+    queue = deque()
+    time = 0
+    completed = 0
+    in_queue = [False] * n
+    # Add processes that arrive at time 0
+    for i, p in enumerate(processes):
+        if p["at"] <= time:
+            queue.append(i)
+            in_queue[i] = True
+    while completed < n:
+        # If queue is empty, move to the next arrival
+        if not queue:
+            time += 1
+            for i, p in enumerate(processes):
+                if (not in_queue[i] and remaining[i] > 0
+                        and p["at"] <= time):
+                    queue.append(i)
+                    in_queue[i] = True
+            continue
+        idx = queue.popleft()
+        # Execute process for one time quantum
+        slice_time = min(remaining[idx], quantum)
+        time += slice_time
+        remaining[idx] -= slice_time
+        # Add newly arrived processes
+        for i, p in enumerate(processes):
+            if (not in_queue[i] and remaining[i] > 0
+                    and p["at"] <= time and i != idx):
+                queue.append(i)
+                in_queue[i] = True
+        if remaining[idx] > 0:
+            queue.append(idx)
+        else:
+            processes[idx]["ct"] = time
+            completed += 1
+            in_queue[idx] = False
+    print_result(processes)
+# Main program
+n = int(input("Enter number of processes: "))
+if n <= 0 or n > 20:
+    print("Enter between 1 and 20 processes.")
+    raise SystemExit
+processes = []
+for i in range(n):
+    print(f"Process {i + 1}")
+    at = int(input("Arrival Time: "))
+    bt = int(input("Burst Time: "))
+    pr = int(input("Priority: "))
+    if at < 0 or bt <= 0:
+        print("Arrival time must be non-negative and burst time positive.")
+        raise SystemExit
+    processes.append({
+        "pid": i + 1,
+        "at": at,
+        "bt": bt,
+        "priority": pr,
+        "ct": 0
+    })
+print("Menu:")
+print("1. FCFS")
+print("2. SJF (Non-preemptive)")
+print("3. Priority (Non-preemptive)")
+print("4. Round Robin")
+choice = int(input("Enter choice: "))
+# Use a fresh copy for the selected algorithm
+if choice == 1:
+    fcfs([p.copy() for p in processes])
+elif choice == 2:
+    sjf([p.copy() for p in processes])
+elif choice == 3:
+    priority_scheduling([p.copy() for p in processes])
+elif choice == 4:
+    quantum = int(input("Enter time quantum: "))
+    if quantum <= 0:
+        print("Time quantum must be positive.")
+    else:
+        round_robin([p.copy() for p in processes], quantum)
+else:
+    print("Invalid choice")
