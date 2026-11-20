@@ -1,0 +1,44 @@
+import threading
+import time
+N = 5
+# Create five fork semaphores
+forks = [threading.Semaphore(1) for _ in range(N)]
+# Allow at most N-1 philosophers to pick up forks
+room = threading.Semaphore(N - 1)
+def philosopher(philosopher_id):
+    left = philosopher_id
+    right = (philosopher_id + 1) % N
+    for cycle in range(2):
+        print(f"Philosopher {philosopher_id} is thinking")
+        time.sleep(0.1)
+        # Enter the room
+        room.acquire()
+        # Pick up left and right forks
+        forks[left].acquire()
+        forks[right].acquire()
+        print(
+            f"Philosopher {philosopher_id} is eating "
+            f"(fork {left} and fork {right})"
+        )
+        time.sleep(0.15)
+        # Put down both forks
+        forks[right].release()
+        forks[left].release()
+        # Leave the room
+        room.release()
+        print(
+            f"Philosopher {philosopher_id} finished eating "
+            "and put down forks"
+        )
+# Create five philosopher threads
+threads = []
+for i in range(N):
+    t = threading.Thread(target=philosopher, args=(i,))
+    threads.append(t)
+# Start all threads
+for t in threads:
+    t.start()
+# Wait for all threads to finish
+for t in threads:
+    t.join()
+print("All philosophers have finished eating.")
