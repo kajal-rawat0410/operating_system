@@ -1,0 +1,68 @@
+MAX = 20
+def first_fit(block_sizes, process_sizes):
+    blocks = block_sizes.copy()
+    allocation = [-1] * len(process_sizes)
+    for i in range(len(process_sizes)):
+        for j in range(len(blocks)):
+            if blocks[j] >= process_sizes[i]:
+                allocation[i] = j
+                blocks[j] -= process_sizes[i]
+                break
+    print("\n--- First Fit ---")
+    display(allocation, process_sizes)
+def best_fit(block_sizes, process_sizes):
+    blocks = block_sizes.copy()
+    allocation = [-1] * len(process_sizes)
+    for i in range(len(process_sizes)):
+        best_index = -1
+        for j in range(len(blocks)):
+            if blocks[j] >= process_sizes[i]:
+                if best_index == -1 or blocks[j] < blocks[best_index]:
+                    best_index = j
+        if best_index != -1:
+            allocation[i] = best_index
+            blocks[best_index] -= process_sizes[i]
+    print("\n--- Best Fit ---")
+    display(allocation, process_sizes)
+def worst_fit(block_sizes, process_sizes):
+    blocks = block_sizes.copy()
+    allocation = [-1] * len(process_sizes)
+    for i in range(len(process_sizes)):
+        worst_index = -1
+        for j in range(len(blocks)):
+            if blocks[j] >= process_sizes[i]:
+                if worst_index == -1 or blocks[j] > blocks[worst_index]:
+                    worst_index = j
+        if worst_index != -1:
+            allocation[i] = worst_index
+            blocks[worst_index] -= process_sizes[i]
+    print("\n--- Worst Fit ---")
+    display(allocation, process_sizes)
+def display(allocation, process_sizes):
+    print("Process No.\tProcess Size\tBlock No.")
+    for i in range(len(process_sizes)):
+        print(f"P{i+1}\t\t{process_sizes[i]}\t\t", end="")
+        if allocation[i] != -1:
+            print(f"B{allocation[i] + 1}")
+        else:
+            print("Not Allocated")
+# Main program
+bn = int(input("Enter number of memory blocks: "))
+if bn < 1 or bn > MAX:
+    print("Enter between 1 and 20 blocks.")
+    exit()
+block_sizes = list(map(int, input("Enter sizes of blocks: ").split()))
+if len(block_sizes) != bn or any(x <= 0 for x in block_sizes):
+    print("Invalid block sizes.")
+    exit()
+pn = int(input("Enter number of processes: "))
+if pn < 1 or pn > MAX:
+    print("Enter between 1 and 20 processes.")
+    exit()
+process_sizes = list(map(int, input("Enter sizes of processes: ").split()))
+if len(process_sizes) != pn or any(x <= 0 for x in process_sizes):
+    print("Invalid process sizes.")
+    exit()
+first_fit(block_sizes, process_sizes)
+best_fit(block_sizes, process_sizes)
+worst_fit(block_sizes, process_sizes)
