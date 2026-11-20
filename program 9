@@ -1,0 +1,79 @@
+MAXFRAMES = 10
+MAXPAGES = 50
+def is_present(frames, page):
+    return page in frames
+# FIFO: First In First Out
+def fifo(ref, nf):
+    frames = [-1] * nf
+    front = 0
+    faults = 0
+    for page in ref:
+        if not is_present(frames, page):
+            frames[front] = page
+            front = (front + 1) % nf
+            faults += 1
+    print("FIFO Page Faults =", faults)
+# LRU: Least Recently Used
+def lru(ref, nf):
+    frames = [-1] * nf
+    last_used = [-1] * nf
+    filled = 0
+    faults = 0
+    for i, page in enumerate(ref):
+        if page in frames:
+            pos = frames.index(page)
+            last_used[pos] = i
+        else:
+            faults += 1
+            if filled < nf:
+                frames[filled] = page
+                last_used[filled] = i
+                filled += 1
+            else:
+                # Find the least recently used page
+                lru_index = last_used.index(min(last_used))
+
+                frames[lru_index] = page
+                last_used[lru_index] = i
+    print("LRU Page Faults =", faults)
+# Optimal Page Replacement
+def optimal(ref, nf):
+    frames = []
+    faults = 0
+    for i, page in enumerate(ref):
+        if page in frames:
+            continue
+        faults += 1
+        if len(frames) < nf:
+            frames.append(page)
+            continue
+        # Find which page is needed farthest in the future
+        farthest = -1
+        replace_index = -1
+        for j in range(nf):
+            try:
+                next_use = ref.index(frames[j], i + 1)
+            except ValueError:
+                replace_index = j
+                break
+            if next_use > farthest:
+                farthest = next_use
+                replace_index = j
+        frames[replace_index] = page
+    print("Optimal Page Faults =", faults)
+# Main program
+n = int(input("Enter number of pages in reference string: "))
+if n < 1 or n > MAXPAGES:
+    print("Enter between 1 and 50 pages.")
+    exit()
+ref = list(map(int, input("Enter the reference string: ").split()))
+if len(ref) != n:
+    print("Invalid reference string length.")
+    exit()
+nf = int(input("Enter number of frames: "))
+if nf < 1 or nf > MAXFRAMES:
+    print("Enter between 1 and 10 frames.")
+    exit()
+fifo(ref, nf)
+lru(ref, nf)
+optimal(ref, nf)
