@@ -1,0 +1,78 @@
+MAX = 50
+def fcfs(req, head):
+    total = 0
+    current = head
+    for track in req:
+        total += abs(current - track)
+        current = track
+    print("FCFS total head movement =", total)
+def sstf(req, head):
+    pending = req.copy()
+    total = 0
+    current = head
+    while pending:
+        # Find the closest pending request
+        closest = min(pending, key=lambda x: abs(current - x))
+        total += abs(current - closest)
+        current = closest
+        pending.remove(closest)
+    print("SSTF total head movement =", total)
+def scan(req, head, disk_size):
+    arr = sorted(req)
+    higher = [x for x in arr if x > head]
+    lower = [x for x in arr if x < head]
+    total = 0
+    current = head
+    # Move towards higher-numbered cylinders
+    for track in higher:
+        total += abs(current - track)
+        current = track
+    # Move to the last cylinder
+    total += abs(current - (disk_size - 1))
+    current = disk_size - 1
+    # Reverse direction and service lower requests
+    for track in reversed(lower):
+        total += abs(current - track)
+        current = track
+    print("SCAN total head movement =", total)
+def cscan(req, head, disk_size):
+    arr = sorted(req)
+    higher = [x for x in arr if x > head]
+    lower = [x for x in arr if x < head]
+    total = 0
+    current = head
+    # Move towards higher-numbered cylinders
+    for track in higher:
+        total += abs(current - track)
+        current = track
+    # Move to the end of the disk
+    total += abs(current - (disk_size - 1))
+    # Circular jump from last cylinder to cylinder 0
+    total += disk_size - 1
+    current = 0
+    # Service remaining lower requests
+    for track in lower:
+        total += abs(current - track)
+        current = track
+    print("C-SCAN total head movement =", total)
+# Main program
+n = int(input("Enter number of requests: "))
+if n < 1 or n > MAX:
+    print("Enter between 1 and 50 requests.")
+    exit()
+req = list(map(int, input("Enter the requests: ").split()))
+if len(req) != n:
+    print("Invalid number of requests.")
+    exit()
+head = int(input("Enter initial head position: "))
+disk_size = int(input("Enter disk size (max cylinder + 1): "))
+if disk_size <= 0 or head < 0 or head >= disk_size:
+    print("Invalid disk size or head position.")
+    exit()
+if any(track < 0 or track >= disk_size for track in req):
+    print("Invalid request: track is outside the disk.")
+    exit()
+fcfs(req, head)
+sstf(req, head)
+scan(req, head, disk_size)
+cscan(req, head, disk_size)
