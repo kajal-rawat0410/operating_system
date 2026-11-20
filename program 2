@@ -1,0 +1,40 @@
+import threading
+NUM_THREADS = 4
+n = 1000000
+# Store the partial sums of each thread
+partial_sums = [0] * NUM_THREADS
+def sum_array(thread_id, start, end):
+    total = 0
+    for i in range(start, end):
+        total += i
+    partial_sums[thread_id] = total
+    print(
+        f"Thread {threading.get_ident() % 100000}: "
+        f"sum[{start}..{end}) = {total}"
+    )
+threads = []
+chunk = n // NUM_THREADS
+# Create four threads
+for i in range(NUM_THREADS):
+    start = i * chunk
+    if i == NUM_THREADS - 1:
+        end = n
+    else:
+        end = (i + 1) * chunk
+    t = threading.Thread(
+        target=sum_array,
+        args=(i, start, end)
+    )
+    threads.append(t)
+    t.start()
+# Wait for all threads to finish
+total = 0
+for t in threads:
+    t.join()
+# Calculate final sum
+for value in partial_sums:
+    total += value
+print(
+    f"Total sum (0 to {n-1}) computed using "
+    f"{NUM_THREADS} threads = {total}"
+)
