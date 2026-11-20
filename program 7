@@ -1,0 +1,99 @@
+P = 5  # Number of processes
+R = 3  # Number of resource types
+# Calculate Need matrix
+def calculate_need(maximum, allocation):
+    need = []
+    for i in range(P):
+        row = []
+        for j in range(R):
+            row.append(maximum[i][j] - allocation[i][j])
+        need.append(row)
+    return need
+# Safety Algorithm
+def is_safe(available, maximum, allocation, need):
+    work = available.copy()
+    finish = [False] * P
+    safe_sequence = []
+    while len(safe_sequence) < P:
+        found = False
+        for i in range(P):
+            if not finish[i]:
+                possible = True
+                for j in range(R):
+                    if need[i][j] > work[j]:
+                        possible = False
+                        break
+                if possible:
+                    for j in range(R):
+                        work[j] += allocation[i][j]
+                    safe_sequence.append(i)
+                    finish[i] = True
+                    found = True
+        if not found:
+            return False, []
+    return True, safe_sequence
+# Resource Request Algorithm
+def request_resources(pid, request, available,
+                      maximum, allocation, need):
+    if pid < 0 or pid >= P:
+        print("Invalid process number.")
+        return
+    for j in range(R):
+        if request[j] > need[pid][j]:
+            print("Error: Process has exceeded its maximum claim.")
+            return
+        if request[j] > available[j]:
+            print("Request denied: Not enough resources available.")
+            return
+    # Temporarily allocate resources
+    for j in range(R):
+        available[j] -= request[j]
+        allocation[pid][j] += request[j]
+        need[pid][j] -= request[j]
+    safe, sequence = is_safe(
+        available, maximum, allocation, need
+    )
+    if safe:
+        print("Request can be granted safely.")
+    else:
+        # Rollback if the new state is unsafe
+        for j in range(R):
+            available[j] += request[j]
+            allocation[pid][j] -= request[j]
+            need[pid][j] += request[j]
+        print("Request denied: Would lead to an unsafe state.")
+# Main program
+available = list(map(int, input(
+    "Enter available resources (3 values): "
+).split()))
+print("Enter Maximum matrix (5 processes x 3 resources):")
+maximum = []
+for i in range(P):
+    row = list(map(int, input(f"P{i}: ").split()))
+    maximum.append(row)
+print("Enter Allocation matrix:")
+allocation = []
+for i in range(P):
+    row = list(map(int, input(f"P{i}: ").split()))
+    allocation.append(row)
+need = calculate_need(maximum, allocation)
+safe, sequence = is_safe(
+    available, maximum, allocation, need
+)
+if safe:
+    print("\nSystem is in a SAFE state.")
+    print("Safe sequence:", end=" ")
+    for process in sequence:
+        print(f"P{process}", end=" ")
+    print()
+else:
+    print("\nSystem is in an UNSAFE state.")
+# Take resource request
+pid = int(input("\nEnter process number requesting resources (0-4): "))
+request = list(map(int, input(
+    "Enter request vector (3 values): "
+).split()))
+request_resources(
+    pid, request, available,
+    maximum, allocation, need
+)
